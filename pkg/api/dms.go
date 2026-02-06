@@ -86,14 +86,15 @@ func (i DMSResource) getFile(req *restful.Request, resp *restful.Response) {
 			return
 		}
 
-		ctx := req.Request.Context()
-		http.ServeFile(resp.ResponseWriter, req.Request, f.GetPath())
-		select {
-		case <-ctx.Done():
+		sleeper := common.NewSleeper()
+		defer sleeper.Close()
+
+		go func() {
+			<-req.Request.Context().Done()
 			session.FinishTrackingFromFile(doNotTrack)
-			return
-		default:
-		}
+		}()
+
+		http.ServeFile(resp.ResponseWriter, req.Request, f.GetPath())
 	case "putio":
 		id, err := strconv.ParseInt(f.Path, 10, 64)
 		if err != nil {
