@@ -161,6 +161,7 @@ func StartServer(version, commit, branch, date string) {
 
 	// CORS
 	handler := cors.Default().Handler(r)
+	handler = keepAwakeMiddleware(handler)
 
 	// WAMP router
 	routerConfig := &router.Config{
@@ -251,4 +252,14 @@ func diskCache(path string) *diskcache.Cache {
 		Transform: func(s string) []string { return []string{s[0:2], s[2:4]} },
 	})
 	return diskcache.NewWithDiskv(d)
+}
+
+func keepAwakeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/download/") || strings.HasPrefix(path, "/myfiles/") {
+			common.KeepAwake()
+		}
+		next.ServeHTTP(w, r)
+	})
 }

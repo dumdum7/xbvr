@@ -86,8 +86,7 @@ func (i DMSResource) getFile(req *restful.Request, resp *restful.Response) {
 			return
 		}
 
-		sleeper := common.NewSleeper()
-		defer sleeper.Close()
+		common.KeepAwake()
 
 		go func() {
 			<-req.Request.Context().Done()
